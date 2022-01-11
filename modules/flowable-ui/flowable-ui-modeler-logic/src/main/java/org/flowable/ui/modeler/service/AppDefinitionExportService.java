@@ -19,6 +19,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -361,7 +363,13 @@ public class AppDefinitionExportService extends BaseAppDefinitionService {
         createZipEntry(zipOutputStream, filename, content.getBytes(StandardCharsets.UTF_8));
     }
 
+    Set zipEntryMap = new HashSet<String>();
     protected void createZipEntry(ZipOutputStream zipOutputStream, String filename, byte[] content) throws Exception {
+        if(zipEntryMap.contains(filename)){
+            LOGGER.error("Duplicate. Exists in zip {}", filename);
+            return;
+        }
+        zipEntryMap.add(filename);
         ZipEntry entry = new ZipEntry(filename);
         zipOutputStream.putNextEntry(entry);
         zipOutputStream.write(content);
