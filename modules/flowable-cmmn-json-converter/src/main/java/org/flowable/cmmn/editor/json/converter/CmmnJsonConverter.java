@@ -200,9 +200,22 @@ public class CmmnJsonConverter implements EditorJsonConstants, CmmnStencilConsta
             propertiesNode.put(PROPERTY_CASE_NAMESPACE, model.getTargetNamespace());
         }
         
+        
         String eventType = caseModel.getStartEventType();
         if (StringUtils.isNotEmpty(eventType)) {
-            propertiesNode.put(PROPERTY_EVENT_TYPE, eventType);
+            //mindas
+            // durng export it was expected to get PROPERTY_EVENT_REGISTRY_EVENT_KEY
+            //propertiesNode.put(PROPERTY_EVENT_TYPE_DEL, eventType);
+
+            List<ExtensionElement> correlationCfgExtensions = caseModel.getExtensionElements()
+                    .getOrDefault(/*CmmnXmlConstants.START_EVENT_CORRELATION_CONFIGURATION*/
+                            "startEventCorrelationConfiguration", Collections.emptyList());
+            if (!correlationCfgExtensions.isEmpty()) {
+                String startEventCorrelationConfiguration = correlationCfgExtensions.get(0).getElementText();
+                propertiesNode.put("startEventCorrelationConfiguration", startEventCorrelationConfiguration);
+            }
+            propertiesNode.put(PROPERTY_EVENT_REGISTRY_EVENT_KEY, eventType);            
+            //eom(mindas)
             
             setPropertyValue(PROPERTY_EVENT_REGISTRY_EVENT_NAME, getExtensionValue("eventName", caseModel), propertiesNode);
             CmmnModelJsonConverterUtil.addEventOutParameters(caseModel.getExtensionElements().get("eventOutParameter"), propertiesNode, objectMapper);
@@ -377,8 +390,17 @@ public class CmmnJsonConverter implements EditorJsonConstants, CmmnStencilConsta
             cmmnModel.setTargetNamespace(namespace);
         }
         caseModel.setDocumentation(CmmnJsonConverterUtil.getPropertyValueAsString(PROPERTY_DOCUMENTATION, modelNode));
-        
         String eventKey = CmmnJsonConverterUtil.getPropertyValueAsString(PROPERTY_EVENT_REGISTRY_EVENT_KEY, modelNode);
+
+
+        //mindas added here:
+        String startEventCorrelationConfiguration = CmmnJsonConverterUtil.getPropertyValueAsString("startEventCorrelationConfiguration", modelNode);
+        addFlowableExtensionElementWithValue("startEventCorrelationConfiguration", startEventCorrelationConfiguration, caseModel);
+        //if (StringUtils.isNotEmpty(eventKey)) {
+        //    eventKey = CmmnJsonConverterUtil.getPropertyValueAsString(PROPERTY_EVENT_REGISTRY_PARAMETER_EVENTTYPE, modelNode);
+        //}
+        //eom(mindas)
+
         if (StringUtils.isNotEmpty(eventKey)) {
             caseModel.setStartEventType(eventKey);
             addFlowableExtensionElementWithValue("eventName", CmmnJsonConverterUtil.getPropertyValueAsString(PROPERTY_EVENT_REGISTRY_EVENT_NAME, modelNode), caseModel);
